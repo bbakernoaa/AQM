@@ -24,7 +24,7 @@ contains
     integer :: is, ie, js, je, nl, nx, ny
     integer :: c, r, l
     integer :: lev0, lev1
-    real    :: Hp, pblh, th0, th1, dz
+    real    :: Hp, pblh, th0, th1, dz, tmp
     real(AQM_KIND_R8) :: hbl
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
@@ -84,9 +84,14 @@ contains
          
         if (lev1 > lev0) then
           dz = 0.0
+          tmp = 0
           do l = lev0, lev1
-            profile(c,r,l) = ( phi(l) - dz ) / phi(lev1)
-            dz = phi(l)
+            if (l != lev1) then 
+               profile(c,r,l) = ( phi(l) - dz ) / phi(lev1) * 0.25
+               dz = phi(l)
+             else
+               profile = ( phi(l) - dz ) / phi(lev1) + ( phi(l) - dz ) / phi(lev1) * (0.75 * lev1)
+             end do 
           end do
         else
           profile(c,r,lev0) = 1.0
