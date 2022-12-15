@@ -86,11 +86,13 @@ contains
           dz = 0.0
           tmp = 0
           do l = lev0, lev1
-            if (l != lev1) then 
-               profile(c,r,l) = ( phi(l) - dz ) / phi(lev1) * 0.25
-               dz = phi(l)
+            if (l == lev1) then 
+               # put 80% at plume injection height
+               profile(c,r,l) = 1. - sum(profile(c,r,:) ) 
              else
-               profile = ( phi(l) - dz ) / phi(lev1) + ( phi(l) - dz ) / phi(lev1) * (0.75 * lev1)
+               # 0.2 is for fractional amount below injection height (perhaps option later) 
+               profile(c,r,l) = ( phi(l) - dz ) / phi(lev1) * 0.2
+               dz = phi(l)
              end do 
           end do
         else
