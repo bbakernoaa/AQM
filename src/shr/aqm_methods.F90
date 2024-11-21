@@ -692,6 +692,14 @@ logical function interpx( fname, vname, pname, &
           end do
         case ('MSFX2')
           buffer(1:lbuf) = 1.
+        case ('DLUSE')
+          k = 0
+          do r = row0, row1
+            do c = col0, col1
+              k = k + 1
+              buffer(k) = stateIn % vtype(c,r)  ! Assign vtype to DLUSE
+            end do
+          end do
         case ('PURB')
         case default
           return
