@@ -605,6 +605,12 @@ contains
               line=__LINE__, &
               file=__FILE__)) &
               return  ! bail
+          case ("vtype")
+            call ESMF_FieldGet(field, localDe=localDe, farrayPtr=stateIn % vtype, rc=rc)
+            if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
+              line=__LINE__, &
+              file=__FILE__)) &
+              return  ! bail
           case default
             ! -- unused field
         end select

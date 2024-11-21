@@ -88,7 +88,7 @@ LOGICAL FUNCTION DESC3( FNAME )
   CHARACTER(LEN=*), INTENT(IN) :: FNAME
 
   INCLUDE SUBST_FILES_ID
- 
+
   integer :: localrc
   integer :: is, ie, js, je
   integer :: EMLAYS
@@ -588,7 +588,7 @@ subroutine nameval(name, eqname)
     case default
       ! -- nothing to do
   end select
-  
+
 end subroutine nameval
 
 
@@ -660,7 +660,7 @@ logical function interpx( fname, vname, pname, &
       do r = row0, row1
         do c = col0, col1
           k = k + 1
-          if (int(stateIn % stype(c,r)) == lu_index) buffer(k) = 1.0
+          if (int(stateIn % vtype(c,r)) == lu_index) buffer(k) = 1.0  ! Assign vtype to LUFRAC_
         end do
       end do
     else
@@ -703,7 +703,7 @@ logical function interpx( fname, vname, pname, &
     call aqm_model_get(stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
-    
+
     call aqm_model_get(config=config, stateIn=stateIn, rc=localrc)
     if (aqm_rc_check(localrc, msg="Failure to retrieve model input state", &
       file=__FILE__, line=__LINE__)) return
