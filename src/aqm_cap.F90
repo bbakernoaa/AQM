@@ -52,7 +52,7 @@ module AQM
       "surface_cell_area                        ", &
       "surface_snow_area_fraction               ", &
       "temperature_of_soil_layer                ", &
-      "vtype                                   "  &  ! Add vtype field
+      "vegetation_type                          "  &
     /)
   ! -- export fields
   integer, parameter :: exportFieldCount = 2
