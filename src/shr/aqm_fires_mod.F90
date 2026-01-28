@@ -40,6 +40,7 @@ contains
     real    :: w, Hp_eff, avg_U, stab_penalty
     real    :: hgt_prev, layer_top, x_low, x_high, weight, total_sum
     real    :: frp_phys, model_top_m
+    real    :: can_frac, weight_32, weight_153
 
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
@@ -81,6 +82,13 @@ contains
         k = k + 1
         phi => state % phil(c,r,:)
         pblh = state % hpbl(c,r)
+
+        ! -- 0. Extra forest canopy turbulence dampening (Heilman 2023)
+        if (associated(state % cfrt)) then
+          can_frac = max(0.0, min(1.0, real(state % cfrt(c,r))))
+        else
+          can_frac = 0.0
+        end if
 
         ! -- 1. Identify levels for stability calculation (approx 2x PBLH)
         lev0 = 1
@@ -141,7 +149,15 @@ contains
           if (use_beta_dist) then
             ! Beta(3,2) Analytical Integral: 4x^3 - 3x^4
             ! Places peak injection at ~66% of plume height
-            weight = (4.0*x_high**3 - 3.0*x_high**4) - (4.0*x_low**3 - 3.0*x_low**4)
+            weight_32 = (4.0*x_high**3 - 3.0*x_high**4) - (4.0*x_low**3 - 3.0*x_low**4)
+
+            ! Heilman (2023) Beta(1.5, 3) Dampened Profile: 4.375x^1.5 - 5.25x^2.5 + 1.875x^3.5
+            ! Places peak injection lower to account for canopy dampening
+            weight_153 = (4.375*x_high**1.5 - 5.25*x_high**2.5 + 1.875*x_high**3.5) - &
+                         (4.375*x_low**1.5 - 5.25*x_low**2.5 + 1.875*x_low**3.5)
+
+            ! Linearly weight the two profiles by canopy fraction
+            weight = (1.0 - can_frac) * weight_32 + can_frac * weight_153
           else
             ! Standard Linear/Uniform mapping
             weight = (layer_top - hgt_prev) / Hp_eff
