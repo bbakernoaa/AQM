@@ -41,6 +41,7 @@ contains
     real    :: hgt_prev, layer_top, x_low, x_high, weight, total_sum
     real    :: frp_phys, model_top_m
     real    :: can_frac, weight_32, weight_153
+    real    :: h_canopy, p_ratio, p_pen, Hp_adj
 
     real(AQM_KIND_R8),    pointer :: phi(:)
     type(aqm_state_type), pointer :: state
@@ -132,11 +133,31 @@ contains
           end if
         end if
 
-        ! -- 5. Safety Check: Cap effective height at model top
+        ! -- 5. Canopy Penetration Adjustment (GEM-MACH style suppression/enhancement)
+        if (associated(state%cfch) .and. associated(state%cfrt)) then
+          if (state%cfch(c,r) > 0.0 .and. can_frac > 0.0) then
+            h_canopy = real(state%cfch(c,r))
+            if (Hp_eff > 0.0) then
+              ! Penetration parameter P relative to canopy top H
+              ! hs (source height) assumed 0 for surface fires
+              p_ratio = h_canopy / Hp_eff
+              p_pen = max(0.0, min(1.0, 1.5 - p_ratio))
+
+              ! Adjusted rise height within/near canopy
+              Hp_adj = (0.62 + 0.38 * p_pen) * h_canopy
+
+              ! Final effective rise height blended by canopy fraction
+              ! Scaling final plume rise by adjusted plume rise using Canopy Fraction
+              Hp_eff = (1.0 - can_frac) * Hp_eff + can_frac * Hp_adj
+            end if
+          end if
+        end if
+
+        ! -- 6. Safety Check: Cap effective height at model top
         model_top_m = phi(nl) * onebg
         Hp_eff = min(Hp_eff, model_top_m - 10.0)
 
-        ! -- 6. Vertical Mass Distribution (Beta PDF or Linear)
+        ! -- 7. Vertical Mass Distribution (Beta PDF or Linear)
         hgt_prev = 0.0
         do l = 1, nl
           layer_top = min(phi(l) * onebg, Hp_eff)
@@ -167,7 +188,7 @@ contains
           hgt_prev = phi(l) * onebg
         end do
 
-        ! -- 7. Final Renormalization for Mass Conservation
+        ! -- 8. Final Renormalization for Mass Conservation
         total_sum = sum(profile(c,r,:))
         if (total_sum > 1.e-9) then
           profile(c,r,:) = profile(c,r,:) * (w / total_sum)
